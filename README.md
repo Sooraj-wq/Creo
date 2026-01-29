@@ -1,141 +1,73 @@
-# Creo - HTTP Client with Database Integration
+# Creo
 
-A complete HTTP client application built in Java that mimics Postman functionality, with automatic database persistence.
+Hey there! Welcome to **Creo**, a custom-built HTTP client I wrote in Java. Think of it as a lightweight, open-source alternative to tools like Postman, but with a few unique twists (like built-in AI summaries).
 
----
+I built this because I wanted to understand how HTTP clients work under the hood—managing connections, handling headers, and persisting data locally. It's a fully functional desktop application wrapped in a Swing GUI.
 
-## Features
+## What can it do?
 
-This application allows you to:
+*   **Send Requests**: Supports the standard method set: `GET`, `POST`, `PUT`, `DELETE`.
+*   **Persistent History**: Unlike some CLI tools that forget everything when you close the terminal, Creo saves every single request and response to a local SQLite database (`oop.db`). You can browse your history anytime.
+*   **AI-Powered Insights**: This is the cool part. If you get a massive JSON response and don't want to parse it manually, Creo can use the Groq API to generate a concise summary of the data for you.
+*   **Clean UI**: A straightforward interface with tabs for Headers, Body, and Response views.
 
-- ✅ **HTTP Operations**: Send GET, POST, PUT, DELETE requests.  
-- ✅ **Custom Headers**: Set headers like `Content-Type`, `Authorization`, etc.  
-- ✅ **Request Body**: Send JSON, XML, or text in POST/PUT requests.  
-- ✅ **Response Analysis**: View status codes, headers, body, and response time.  
-- ✅ **Database Integration**: Automatically stores all requests and responses in SQLite.  
-- ✅ **Simple Architecture**: Clean, beginner-friendly code structure.
+## Getting Started
 
----
+### Prerequisites
 
-## Project Structure
+You'll need a standard Java setup:
+*   **Java JDK 11+** (I'm using newer features, so 21 is ideal, but it should work on modern LTS versions).
+*   **Just** (Optional, but makes running commands easier).
 
-```
-Creo/
-├── PostmanApp.java           # Main application demonstrating functionality
-├── SimpleHTTPClientUI.java   # Main UI application (Frontend)
-├── backend/                  # Backend and database integration
-│   ├── DBHandle.java         # Database connection and initialization
-│   ├── HttpClientService.java# HTTP client service
-│   ├── Request.java          # Request data model
-│   ├── Response.java         # Response data model
-│   ├── RequestsDAO.java      # Database operations for requests
-│   └── ResponsesDAO.java     # Database operations for responses
-├── database/
-│   ├── oop.db                # SQLite database (auto-created)
-├── lib/
-│   └── sqlite-jdbc-3.50.3.0.jar # SQLite JDBC driver
-└── README.md                 # This file
-```
+### Setup
 
----
+1.  **Compiling**:
+    I've included a `Justfile` to make this easy.
+    ```bash
+    just build
+    ```
+    *If you don't have `just`, you can run:*
+    `javac -d out/production/Creo -cp "lib/*" *.java`
 
-## How to Run
+### Running the App
 
-### Set Groq API Key
-
-Add the following environment variable
-
+To launch the main GUI:
 ```bash
-GROQ_API_KEY=<your-api-key>
+just run
 ```
+*(Or manually: `java -cp "out/production/Creo:lib/*" SimpleHTTPClientUI`)*
 
-### Compile
+### Enabling AI Summaries (Optional)
 
+If you want the AI summary feature to work, you need a Groq API key.
+1.  Get a key from [Groq Console](https://console.groq.com).
+2.  Set it as an environment variable before running the app:
+
+**Linux/Mac:**
 ```bash
-javac -d out/production/Creo -cp "lib/*" *.java
-
-# Or with the Just task runner
-just build
-```
-
-### Run Application
-
-```bash
-java -cp "out/production/Creo:lib/*" SimpleHTTPClientUI
-
-# Or with the Just task runner
+export GROQ_API_KEY="your_actual_api_key_here"
 just run
 ```
 
-> Note: On Windows, replace `:` with `;` in the classpath.
+**Windows (PowerShell):**
+```powershell
+$env:GROQ_API_KEY="your_actual_api_key_here"
+just run
+```
 
----
+## How it Works
 
-## Demo Usage
+The project follows a layered architecture to keep things tidy:
+*   **UI Layer**: `SimpleHTTPClientUI.java` handles the Swing components using a SplitPane layout (History on the left, Request/Response on the right).
+*   **Service Layer**: `PostmanBackendService` acts as the brain, coordinating between the UI, the HTTP client, and the database.
+*   **Data Layer**: `RequestsDAO` and `ResponsesDAO` handle all SQLite operations. We use a relational model where every Response is linked to its parent Request.
 
-- **GET Request**:  
-  - URL: `https://jsonplaceholder.typicode.com/posts/1`  
-  - Method: GET  
+## Libraries Used
 
-- **POST Request**:  
-  - URL: `https://jsonplaceholder.typicode.com/posts`  
-  - Method: POST  
-  - Headers: `Content-Type: application/json`  
-  - Body:
-    ```json
-    {
-      "title": "My Post",
-      "body": "Post content",
-      "userId": 1
-    }
-    ```
+I tried to keep dependencies minimal:
+*   **Google Gson**: For handling JSON.
+*   **SQLite JDBC**: For the local database.
+*   **CommonMark**: To render the AI's Markdown responses as HTML in the UI.
+*   **FlatLaf**: To make Swing look a bit more modern.
 
-- **Response**: Displays status code, headers, body, and saves to database.  
-- **Database**: Requests and responses are automatically stored for verification.
-
----
-
-## Key Classes
-
-### Frontend (UI Layer)
-- **Technology**: Java Swing  
-- **Purpose**: Provides user interface for entering requests and viewing responses.  
-- **Components**: URL field, method dropdown, headers area, body area, send button, response display.
-
-### Backend (Business Logic)
-- **Technology**: Java HTTP Client (built-in since Java 11)  
-- **Purpose**: Handles actual HTTP communication.  
-- **Class**: `HttpClientService` – executes HTTP requests, parses responses, handles errors.  
-- **Integration**: `PostmanBackendService` combines HTTP operations with database storage.
-
-### Database Layer
-- **Technology**: SQLite  
-- **Purpose**: Stores request and response history.  
-- **Classes**: `DBHandle`, `RequestsDAO`, `ResponsesDAO`  
-- **Tables**:
-  - **Requests**: ID, Method, URL, Headers, Body, Timestamp
-  - **Responses**: ID, Request_ID, Status_Code, Headers, Body, Content_Type, Timestamp
-
----
-
-## Architecture
-
-- **Pattern**: Three-tier architecture (Presentation → Business Logic → Data)  
-- **Benefits**: Separation of concerns, maintainable code, easy to extend.
-
----
-
-## College Project Benefits
-
-- Demonstrates **GUI development**  
-- Implements **HTTP protocol knowledge**  
-- Includes **database integration**  
-- Uses **object-oriented programming**  
-- Shows **MVC-like architecture**  
-
----
-
-**Created by**: College Project Team  
-**Language**: Java 11+  
-**Database**: SQLite  
-**Purpose**: Learn HTTP client development with database integration  
+Enjoy testing your APIs!

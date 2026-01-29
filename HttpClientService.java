@@ -450,7 +450,7 @@ class PostmanBackendService {
         
         try {
             // Step 1: Save request to database BEFORE sending
-            saveRequestToDatabase(method, url, headers, body);
+            int requestId = saveRequestToDatabase(method, url, headers, body);
             
             // Step 2: Create request data and send HTTP request
             HttpRequestData requestData = new HttpRequestData(url, method);
@@ -460,7 +460,9 @@ class PostmanBackendService {
             HttpResponse httpResponse = httpClientService.executeRequest(requestData);
             
             // Step 3: Save response to database AFTER receiving
-            saveResponseToDatabase(httpResponse);
+            if (requestId != -1) {
+                saveResponseToDatabase(requestId, httpResponse);
+            }
             
             System.out.println("✓ Request-Response cycle completed and saved to database");
             return httpResponse;
@@ -475,7 +477,7 @@ class PostmanBackendService {
     }
     
     // Save request to database
-    private void saveRequestToDatabase(String method, String url, Map<String, String> headers, String body) {
+    private int saveRequestToDatabase(String method, String url, Map<String, String> headers, String body) {
         try {
             Request request = new Request(
                 0, // ID will be auto-generated
@@ -487,20 +489,22 @@ class PostmanBackendService {
             );
             
             RequestsDAO requestsDAO = new RequestsDAO();
-            requestsDAO.insert(request);
-            System.out.println("✓ Request saved to database");
+            int requestId = requestsDAO.insert(request);
+            System.out.println("✓ Request saved to database (ID: " + requestId + ")");
+            return requestId;
             
         } catch (Exception e) {
             System.err.println("✗ Failed to save request to database: " + e.getMessage());
+            return -1;
         }
     }
     
     // Save response to database
-    private void saveResponseToDatabase(HttpResponse httpResponse) {
+    private void saveResponseToDatabase(int requestId, HttpResponse httpResponse) {
         try {
             Response response = new Response(
                 0, // ID will be auto-generated
-                0, // Request_ID (simplified for now)
+                requestId, // Request_ID linked to the request
                 httpResponse.getStatusCode(),
                 httpResponse.getHeaders() != null ? httpResponse.getHeaders().toString() : "",
                 httpResponse.getBody() != null ? httpResponse.getBody() : "",
